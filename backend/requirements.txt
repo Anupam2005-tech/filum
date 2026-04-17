@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+crewai[tools]
+python-dotenv
+pydantic
+apscheduler
+playwright
+beautifulsoup4
+pymupdf
+python-docx
+firebase-admin
+httpx
+langchain-google-genai
+langchain-openai

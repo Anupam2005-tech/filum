@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+@theme {
+  /* Premium Monochromatic Palette (Zinc Based) */
+  --color-bg-primary: #000000;
+  --color-bg-secondary: #09090b;
+  --color-bg-tertiary: #18181b;
+  
+  --color-fg-primary: #ffffff;
+  --color-fg-secondary: #d4d4d8;
+  --color-fg-muted: #71717a;
+  
+  --color-border-primary: #27272a;
+  
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui;
+  
+  --container-width: 1200px;
+}
+
+@layer base {
+  body {
+    @apply bg-bg-primary text-fg-primary font-sans antialiased selection:bg-white selection:text-black;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-bg-secondary/50 backdrop-blur-xl border border-border-primary rounded-3xl transition-all duration-300;
+  }
+  
+  .premium-button {
+    @apply flex items-center justify-center gap-2 px-6 py-3 rounded-full text-sm font-bold transition-all duration-300;
+  }
+  
+  .premium-button-primary {
+    @apply bg-white text-black hover:bg-fg-secondary;
+  }
+  
+  .premium-button-secondary {
+    @apply bg-bg-tertiary border border-border-primary text-fg-primary hover:border-white;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-bg-primary;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-border-primary rounded-full hover:bg-fg-muted transition-colors;
+}
