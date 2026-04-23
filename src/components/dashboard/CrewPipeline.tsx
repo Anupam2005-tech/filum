@@ -54,7 +54,7 @@ export function CrewPipeline() {
       {/* Background Pipeline Line */}
       <div className="absolute top-1/2 left-0 w-full h-px bg-white/5 -translate-y-[40px]" />
       
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {agents.map((agent, index) => {
           const Icon = agent.icon;
           const isLast = index === agents.length - 1;

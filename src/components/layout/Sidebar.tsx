@@ -7,14 +7,18 @@ import { useAuth } from '@/lib/firebase/AuthContext';
 import { 
   LayoutDashboard, 
   FileText, 
+  Briefcase,
   Settings,
-  LogOut
+  LogOut,
+  Sparkles
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Logo } from '@/components/ui/Logo';
 
 const navItems = [
-  { name: 'Dashboard', icon: LayoutDashboard, href: '/' },
+  { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
+  { name: 'Complete Profile', icon: Sparkles, href: '/onboarding' },
+  { name: 'Jobs', icon: Briefcase, href: '/jobs' },
   { name: 'Resume', icon: FileText, href: '/resume' },
   { name: 'Settings', icon: Settings, href: '/settings' },
 ];

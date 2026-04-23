@@ -4,41 +4,59 @@ import React from 'react';
 import { Briefcase, CheckCircle, Clock, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const stats = [
-  { 
-    label: 'Total Scanned', 
-    value: '1,284', 
-    icon: Briefcase, 
-    trend: '+12%',
-    sub: 'Analyzed today'
-  },
-  { 
-    label: 'AI Matched', 
-    value: '42', 
-    icon: Zap, 
-    trend: '94%',
-    sub: 'Suitability score'
-  },
-  { 
-    label: 'Applied', 
-    value: '18', 
-    icon: CheckCircle, 
-    trend: '+4',
-    sub: 'In last 2h'
-  },
-  { 
-    label: 'Wait Time', 
-    value: '12m', 
-    icon: Clock, 
-    trend: '-2m',
-    sub: 'Processing speed'
-  },
-];
+interface StatsGridProps {
+  stats?: {
+    listingsScanned: string;
+    avgFitScore: string;
+    appsSubmitted: string;
+    lastScan: string;
+  };
+}
 
-export function StatsGrid() {
+export function StatsGrid({ stats }: StatsGridProps) {
+  const defaultStats = {
+    listingsScanned: '0',
+    avgFitScore: '0%',
+    appsSubmitted: '0',
+    lastScan: 'Never',
+  };
+
+  const currentStats = stats || defaultStats;
+
+  const statsList = [
+    { 
+      label: 'Total Scanned', 
+      value: currentStats.listingsScanned, 
+      icon: Briefcase, 
+      trend: '+12%',
+      sub: 'Analyzed today'
+    },
+    { 
+      label: 'AI Matched', 
+      value: currentStats.avgFitScore, 
+      icon: Zap, 
+      trend: 'High',
+      sub: 'Suitability score'
+    },
+    { 
+      label: 'Applied', 
+      value: currentStats.appsSubmitted, 
+      icon: CheckCircle, 
+      trend: 'Active',
+      sub: 'In last 24h'
+    },
+    { 
+      label: 'Last Scan', 
+      value: currentStats.lastScan, 
+      icon: Clock, 
+      trend: 'Now',
+      sub: 'Processing speed'
+    },
+  ];
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      {stats.map((stat, i) => {
+      {statsList.map((stat, i) => {
         const Icon = stat.icon;
         return (
           <motion.div

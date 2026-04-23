@@ -4,14 +4,27 @@ import React from 'react';
 import { ExternalLink, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const matches = [
-  { id: 1, company: 'Google', role: 'Software Engineer Intern', score: 98, platform: 'LinkedIn', initial: 'G' },
-  { id: 2, company: 'Amazon', role: 'SDE Intern', score: 94, platform: 'Handshake', initial: 'A' },
-  { id: 3, company: 'Zomato', role: 'Product Intern', score: 89, platform: 'Unstop', initial: 'Z' },
-  { id: 4, company: 'TCS', role: 'Digital Intern', score: 82, platform: 'Direct', initial: 'T' },
-];
+interface TopMatchesProps {
+  matches?: any[];
+}
 
-export function TopMatches() {
+export function TopMatches({ matches: propMatches }: TopMatchesProps) {
+  const defaultMatches = [
+    { id: 1, company: 'Google', role: 'Software Engineer Intern', score: 98, platform: 'LinkedIn', initial: 'G' },
+    { id: 2, company: 'Amazon', role: 'SDE Intern', score: 94, platform: 'Handshake', initial: 'A' },
+    { id: 3, company: 'Zomato', role: 'Product Intern', score: 89, platform: 'Unstop', initial: 'Z' },
+    { id: 4, company: 'TCS', role: 'Digital Intern', score: 82, platform: 'Direct', initial: 'T' },
+  ];
+
+  const matches = propMatches?.length ? propMatches.map((m: any, i: number) => ({
+    id: i,
+    company: m.company || 'Unknown',
+    role: m.role || 'Position',
+    score: m.score || 0,
+    platform: m.platform || 'Direct',
+    initial: (m.company || '?')[0]?.toUpperCase() || '?'
+  })) : defaultMatches;
+
   return (
     <div className="glass-panel flex flex-col h-[500px]">
       <div className="p-6 border-b border-white/5 bg-bg-secondary/30">
@@ -25,7 +38,7 @@ export function TopMatches() {
       </div>
 
       <div className="flex-1 overflow-auto divide-y divide-white/5 scrollbar-hide">
-        {matches.map((job, i) => (
+        {matches.map((job: any, i: number) => (
           <motion.div 
             key={job.id}
             initial={{ opacity: 0, x: 20 }}
@@ -72,3 +85,4 @@ export function TopMatches() {
     </div>
   );
 }
+

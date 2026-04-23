@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FileText, 
   Upload, 
@@ -11,11 +11,66 @@ import {
   AlertCircle,
   Briefcase,
   GraduationCap,
-  Wrench
+  Wrench,
+  Loader2
 } from 'lucide-react';
+import { useAuth } from '@/lib/firebase/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function ResumePage() {
+  const { user } = useAuth();
+  const router = useRouter();
   const [isUploading, setIsUploading] = useState(false);
+  const [resumeData, setResumeData] = useState<any>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      fetchResume();
+    }
+  }, [user]);
+
+  async function fetchResume() {
+    try {
+      const res = await fetch(`http://localhost:8000/user/resume/${user?.uid}`);
+      if (res.ok) {
+        const data = await res.json();
+        setResumeData(data);
+      }
+    } catch (e) {
+      console.error("Error fetching resume:", e);
+    }
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    setIsUploading(true);
+    setUploadError(null);
+
+    const formData = new FormData();
+    formData.append('user_id', user.uid);
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('http://localhost:8000/user/resume', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error("Failed to upload resume");
+
+      await fetchResume();
+      // After upload, let the user know or redirect them to dashboard
+      alert("Resume uploaded and parsed successfully!");
+      router.push('/');
+    } catch (e: any) {
+      setUploadError(e.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <div className="space-y-8 pb-12">
@@ -30,30 +85,46 @@ export default function ResumePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Col: Upload & Files */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="glass-panel p-6 border-dashed border-2 flex flex-col items-center justify-center gap-4 text-center group cursor-pointer hover:border-white transition-all">
+          <label className={`
+            glass-panel p-6 border-dashed border-2 flex flex-col items-center justify-center gap-4 text-center group cursor-pointer 
+            ${isUploading ? 'opacity-50 pointer-events-none' : 'hover:border-white transition-all'}
+          `}>
+            <input 
+              type="file" 
+              className="hidden" 
+              accept=".pdf,.docx" 
+              onChange={handleFileUpload} 
+            />
             <div className="w-16 h-16 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center group-hover:bg-white transition-all">
-              <Upload className="w-8 h-8 text-[var(--fg-muted)] group-hover:text-black transition-all" />
+              {isUploading ? (
+                <Loader2 className="w-8 h-8 animate-spin text-white group-hover:text-black" />
+              ) : (
+                <Upload className="w-8 h-8 text-[var(--fg-muted)] group-hover:text-black transition-all" />
+              )}
             </div>
             <div>
-              <p className="text-sm font-bold">Upload New Resume</p>
+              <p className="text-sm font-bold">{isUploading ? 'Parsing Resume...' : 'Upload New Resume'}</p>
               <p className="text-[10px] text-[var(--fg-muted)] mt-1">PDF or DOCX max 5MB</p>
             </div>
-          </div>
+          </label>
+
+          {uploadError && (
+            <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center gap-3 text-red-500 text-xs">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              {uploadError}
+            </div>
+          )}
 
           <div className="glass-panel p-6">
-            <h3 className="text-xs font-bold uppercase tracking-widest mb-4">Current Versions</h3>
+            <h3 className="text-xs font-bold uppercase tracking-widest mb-4">Current Version</h3>
             <div className="space-y-3">
-              {[
-                { name: 'Master_Resume_2024.pdf', type: 'Master', date: '2d ago' },
-                { name: 'Google_Tailored_v1.docx', type: 'Tailored', date: '4h ago' },
-                { name: 'Amazon_Tailored_v3.docx', type: 'Tailored', date: '6h ago' },
-              ].map((file) => (
-                <div key={file.name} className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-transparent hover:border-white/10 transition-all">
+              {resumeData ? (
+                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-transparent hover:border-white/10 transition-all">
                   <div className="flex items-center gap-3 min-w-0">
                     <FileText className="w-4 h-4 text-[var(--fg-muted)]" />
                     <div className="truncate">
-                      <p className="text-xs font-medium truncate">{file.name}</p>
-                      <p className="text-[9px] text-[var(--fg-muted)]">{file.type} • {file.date}</p>
+                      <p className="text-xs font-medium truncate">{resumeData.filename}</p>
+                      <p className="text-[9px] text-[var(--fg-muted)]">Master • {new Date(resumeData.timestamp).toLocaleDateString()}</p>
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -61,7 +132,9 @@ export default function ResumePage() {
                     <button className="p-1.5 hover:bg-white/10 rounded text-red-500/50 hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
                   </div>
                 </div>
-              ))}
+              ) : (
+                <p className="text-xs text-[var(--fg-muted)] italic text-center py-4">No resume uploaded yet</p>
+              )}
             </div>
           </div>
         </div>
@@ -79,52 +152,31 @@ export default function ResumePage() {
               </button>
             </div>
 
-            <div className="space-y-8">
-              {/* Experience */}
-              <section>
-                <div className="flex items-center gap-2 mb-4">
-                  <Briefcase className="w-4 h-4 text-[var(--fg-muted)]" />
-                  <h4 className="text-sm font-bold uppercase tracking-tight">Experience</h4>
-                </div>
-                <div className="space-y-4">
-                  <div className="pl-4 border-l-2 border-[var(--border-primary)] py-1">
-                    <p className="text-xs font-bold">Frontend Engineer Intern</p>
-                    <p className="text-[10px] text-[var(--fg-muted)] uppercase font-black">Startup X • 2023 - Present</p>
-                    <p className="text-xs text-[var(--fg-secondary)] mt-2 italic">Building scalable React components and optimizing performance.</p>
+            {resumeData ? (
+              <div className="space-y-8">
+                <section>
+                  <div className="flex items-center gap-2 mb-4">
+                    <FileText className="w-4 h-4 text-[var(--fg-muted)]" />
+                    <h4 className="text-sm font-bold uppercase tracking-tight">Extracted Content</h4>
                   </div>
+                  <div className="p-4 rounded-xl bg-white/5 border border-[var(--border-primary)]">
+                    <p className="text-xs text-[var(--fg-secondary)] leading-relaxed whitespace-pre-wrap">
+                      {resumeData.text}
+                    </p>
+                  </div>
+                </section>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+                <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center">
+                  <Upload className="w-8 h-8 text-[var(--fg-muted)]" />
                 </div>
-              </section>
-
-              {/* Education */}
-              <section>
-                <div className="flex items-center gap-2 mb-4">
-                  <GraduationCap className="w-4 h-4 text-[var(--fg-muted)]" />
-                  <h4 className="text-sm font-bold uppercase tracking-tight">Education</h4>
+                <div>
+                  <p className="text-sm font-bold">No data to display</p>
+                  <p className="text-xs text-[var(--fg-secondary)]">Please upload your resume to generate your AI profile.</p>
                 </div>
-                <div className="pl-4 border-l-2 border-[var(--border-primary)] py-1">
-                  <p className="text-xs font-bold">B.Tech in Computer Science</p>
-                  <p className="text-[10px] text-[var(--fg-muted)] uppercase font-black">Top University • 2021 - 2025</p>
-                </div>
-              </section>
-
-              {/* Skills */}
-              <section>
-                <div className="flex items-center gap-2 mb-4">
-                  <Wrench className="w-4 h-4 text-[var(--fg-muted)]" />
-                  <h4 className="text-sm font-bold uppercase tracking-tight">Skills</h4>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {['React', 'Next.js', 'Typescript', 'Node.js', 'Python', 'AWS', 'Firebase', 'CrewAI'].map(skill => (
-                    <span key={skill} className="px-3 py-1 bg-white/5 border border-[var(--border-primary)] rounded-full text-[10px] text-[var(--fg-secondary)]">
-                      {skill}
-                    </span>
-                  ))}
-                  <button className="w-6 h-6 rounded-full bg-white text-black flex items-center justify-center hover:bg-[var(--fg-secondary)] transition-all">
-                    <Plus className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </section>
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

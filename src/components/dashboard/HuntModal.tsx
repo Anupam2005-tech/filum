@@ -1,14 +1,51 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Globe, Target, X, Zap } from 'lucide-react';
+import { Search, Globe, Target, X, Zap, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/lib/firebase/AuthContext';
 
 export function HuntModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const { user } = useAuth();
   const [role, setRole] = useState('Software Engineer Intern');
   const [platforms, setPlatforms] = useState(['LinkedIn', 'Unstop']);
+  const [isHunting, setIsHunting] = useState(false);
 
   if (!isOpen) return null;
+
+  const handleTriggerHunt = async () => {
+    if (!user) return;
+    setIsHunting(true);
+    try {
+      const formData = new FormData();
+      formData.append('user_id', user.uid);
+      
+      // First, update the profile with the new target role from the modal
+      const profileData = new FormData();
+      profileData.append('user_id', user.uid);
+      profileData.append('role', role);
+      profileData.append('locations', 'Remote, Global'); // Simplified for now
+
+      await fetch('http://localhost:8000/user/profile', {
+        method: 'POST',
+        body: profileData,
+      });
+
+      const res = await fetch('http://localhost:8000/ai/discover', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error("Failed to trigger hunt");
+      
+      alert("AI Crew Activated! Your search is now running in the background.");
+      onClose();
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setIsHunting(false);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -29,8 +66,8 @@ export function HuntModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           className="relative w-full max-w-lg bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)]"
         >
-          <div className="p-8">
-            <div className="flex items-center justify-between mb-8">
+           <div className="p-6">
+             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center">
                   <Target className="text-black w-6 h-6" />
@@ -79,13 +116,18 @@ export function HuntModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
               </div>
             </div>
 
-            <div className="mt-10 pt-8 border-t border-[var(--border-primary)]">
+             <div className="mt-6 pt-6 border-t border-[var(--border-primary)]">
               <button 
-                onClick={onClose}
-                className="w-full bg-white text-black py-4 rounded-xl font-black text-sm hover:bg-[var(--fg-secondary)] transition-all flex items-center justify-center gap-2 shadow-[0_20px_50px_rgba(255,255,255,0.1)]"
+                onClick={handleTriggerHunt}
+                disabled={isHunting}
+                className="w-full bg-white text-black py-4 rounded-xl font-black text-sm hover:bg-[var(--fg-secondary)] transition-all flex items-center justify-center gap-2 shadow-[0_20px_50px_rgba(255,255,255,0.1)] disabled:opacity-50"
               >
-                <Zap className="w-4 h-4 fill-current" />
-                ACTIVATE DISCOVERY CREW
+                {isHunting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Zap className="w-4 h-4 fill-current" />
+                )}
+                {isHunting ? 'ACTIVATING CREW...' : 'ACTIVATE DISCOVERY CREW'}
               </button>
               <p className="text-center text-[9px] text-[var(--fg-muted)] mt-4 uppercase tracking-[0.1em]">
                 Estimating 2-3 minutes for deep structural analysis
